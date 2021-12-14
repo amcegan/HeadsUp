@@ -10543,3 +10543,6 @@ Error: can't grab camera image
 Camera number 0
 Image size 1920 x 1080
 Display scale 2:1
+Camera number 0
+Image size 1920 x 1080
+Display scale 2:1
