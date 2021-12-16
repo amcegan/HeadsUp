@@ -34,6 +34,11 @@ class YoloVideoSelf:
         self.out1 = None
         self.direct = None
 
+        self.freezeVideo = 4
+        self.posteriorAngle = -12
+        self.anteriorAngle = 12
+
+
     def processFrame(self, frame, neural_network, capture, camera_num):
         self.camera_num = camera_num
         self.capture = capture
@@ -121,7 +126,7 @@ class YoloVideoSelf:
 
             now = datetime.now().time()  # time object
             current_time = now.strftime("%H:%M:%S")
-            if angle < -12 or angle > 14:
+            if angle < self.posteriorAngle or angle > self.anteriorAngle:
                 print('Angle is ' + str(int(angle)) + '  at ' + current_time)
                 if not self.postureTimerStarted:
                     self.postureTimerStarted = True
@@ -132,9 +137,6 @@ class YoloVideoSelf:
                     self.out1 = cv2.VideoWriter(
                         os.path.join(self.direct, 'video.mp4'),
                         self.fourcc, 10.0, (self.width, self.height))
-                    self.out1.write(img)
-                else:
-                    self.out1.write(img)
                 timedOut = time.time() - self.startTime > 5
                 # print('timed out ' + str(timedOut))
                 if timedOut and self.postureTimerStarted:
@@ -144,13 +146,15 @@ class YoloVideoSelf:
                     file = "3.wav"
                     os.system("afplay " + file)
                     print('*************** wav *******************')
-                    time.sleep(2)
+                    time.sleep(self.freezeVideo)
                     self.postureTimerStarted = False
                     self.out1.release()
+                    self.out1 = None
             else:    # NOT angle < -12 or angle > 14
                 if self.postureTimerStarted:
                     self.postureTimerStarted = False
                     self.out1.release()
+                    self.out1 = None
                     try:
                         if os.path.isfile(os.path.join(self.direct, 'video.mp4')):
                             os.remove(os.path.join(self.direct, 'video.mp4'))
@@ -161,43 +165,46 @@ class YoloVideoSelf:
                         print("Error: %s - %s." % (e.filename, e.strerror))
                     print('********  reset timer ************')
 
+        if self.postureTimerStarted:
+            self.out1.write(img)
+
     def slopeOf(self, x1, y1, x2, y2):
         m = (y2 - y1) / (x2 - x1)
         return m
 
 
-class Thread2(QThread):
-
-    def __init__(self, name, camera_num):
-        self.cap = cv2.VideoCapture(self.camera_num)
-        print('name ' + str(name))
-        super().__init__()
-        self.active = True
-        print('C ' + str(camera_num))
-        print('N ' + str(name))
-        self.camera_num = camera_num
-        self.fileName = name
-
-    def run(self):
-        if self.active:
-            width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH) + 0.5)
-            height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT) + 0.5)
-            # !!!                             # установите свой путь !!!
-            direct = 'camera/' + datetime.now().strftime('%Y-%m-%d__%H-%M-%S')
-            self.path = os.makedirs(direct)
-            self.fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            # !!!                                             # установите свой путь !!!
-            self.out1 = cv2.VideoWriter(
-                os.path.join(direct, 'video.mp4'),
-                self.fourcc, 20.0, (width, height))
-            #            while True:
-            while self.active:  # +
-                ret1, image1 = self.cap.read()
-                if ret1:
-                    self.out1.write(image1)
-                self.msleep(1)  # +
-
-    def stop(self):
-        print('2.1')
-        #        if self.active == False:
-        self.out1.release()
+# class Thread2(QThread):
+#
+#     def __init__(self, name, camera_num):
+#         self.cap = cv2.VideoCapture(self.camera_num)
+#         print('name ' + str(name))
+#         super().__init__()
+#         self.active = True
+#         print('C ' + str(camera_num))
+#         print('N ' + str(name))
+#         self.camera_num = camera_num
+#         self.fileName = name
+#
+#     def run(self):
+#         if self.active:
+#             width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH) + 0.5)
+#             height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT) + 0.5)
+#             # !!!                             # установите свой путь !!!
+#             direct = 'camera/' + datetime.now().strftime('%Y-%m-%d__%H-%M-%S')
+#             self.path = os.makedirs(direct)
+#             self.fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+#             # !!!                                             # установите свой путь !!!
+#             self.out1 = cv2.VideoWriter(
+#                 os.path.join(direct, 'video.mp4'),
+#                 self.fourcc, 20.0, (width, height))
+#             #            while True:
+#             while self.active:  # +
+#                 ret1, image1 = self.cap.read()
+#                 if ret1:
+#                     self.out1.write(image1)
+#                 self.msleep(1)  # +
+#
+#     def stop(self):
+#         print('2.1')
+#         #        if self.active == False:
+#         self.out1.release()

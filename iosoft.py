@@ -34,7 +34,7 @@ capturing = True  # Flag to indicate capturing
 # Grab images from the camera (separate thread)
 def grab_images(cam_num, queue, self=None):
     cap = cv2.VideoCapture(camera_num)
-    neural_network = cv2.dnn.readNet("yolov4-tiny_best-2.weights", "yolov4-tiny-4.cfg")
+    neural_network = cv2.dnn.readNet("yolov4-tiny_best-5.weights", "yolov4-tiny-5.cfg")
     neural_network.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
     neural_network.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
     yoloVideoSelf = YoloVideoSelf()
