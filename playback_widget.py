@@ -1,4 +1,5 @@
 import sys
+import time
 
 from PyQt5.QtCore import Qt, QDir, QUrl
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
@@ -68,6 +69,11 @@ class VideoPlayer(QWidget):
             self.mediaPlayer.setMedia(
                 QMediaContent(QUrl.fromLocalFile(fileName)))
             self.playButton.setEnabled(True)
+
+            # place a video frame in the playback widget
+            self.play()
+            time.sleep(.01)
+            self.play()
 
     def play(self):
         if self.mediaPlayer.state() == QMediaPlayer.PlayingState:
