@@ -25,7 +25,7 @@ DISP_MSEC = 50  # Delay between display cycles
 CAP_API = cv2.CAP_ANY  # API: CAP_ANY or CAP_DSHOW etc...
 EXPOSURE = 0  # Zero for automatic exposure
 TEXT_FONT = QFont("Courier", 10)
-    
+
 camera_num = 0  # Default camera (first in list)
 image_queue = Queue.Queue()  # Queue to hold images
 capturing = True  # Flag to indicate capturing
@@ -65,10 +65,6 @@ def grab_images(cam_num, queue, self=None):
     cap.release()
 
 
-# Image widget
-
-
-# Main window
 class MyWindow(QMainWindow):
     text_update = pyqtSignal(str)
 
@@ -76,10 +72,6 @@ class MyWindow(QMainWindow):
     def __init__(self, parent=None):
         QMainWindow.__init__(self, parent)
         self.qWidget = QWidget(self)
-        self.textbox = QTextEdit(self.qWidget)
-        self.textbox.setFont(TEXT_FONT)
-        self.textbox.setMinimumSize(300, 100)
-        self.text_update.connect(self.append_text)
         sys.stdout = self
         print("Camera number %u" % camera_num)
         print("Image size %u x %u" % IMG_SIZE)
@@ -114,7 +106,6 @@ class MyWindow(QMainWindow):
         self.hBoxLayout.addWidget(self.tabs)
 
         self.vLayout.addLayout(self.hBoxLayout)
-        self.vLayout.addWidget(self.textbox)
         self.qWidget.setLayout(self.vLayout)
         self.setCentralWidget(self.qWidget)
 
@@ -169,18 +160,6 @@ class MyWindow(QMainWindow):
 
     def flush(self):
         pass
-
-    # Append to text display
-    def append_text(self, text):
-        cur = self.textbox.textCursor()  # Move cursor to end of text
-        cur.movePosition(QTextCursor.End)
-        s = str(text)
-        while s:
-            head, sep, s = s.partition("\n")  # Split line at LF
-            cur.insertText(head)  # Insert text at cursor
-            if sep:  # New line if LF
-                cur.insertBlock()
-        self.textbox.setTextCursor(cur)  # Update visible cursor
 
     # Window is closing: stop video capture
     def closeEvent(self, event):

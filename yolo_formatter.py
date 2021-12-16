@@ -38,7 +38,6 @@ class YoloVideoSelf:
         self.posteriorAngle = -12
         self.anteriorAngle = 12
 
-
     def processFrame(self, frame, neural_network, capture, camera_num):
         self.camera_num = camera_num
         self.capture = capture
@@ -150,7 +149,7 @@ class YoloVideoSelf:
                     self.postureTimerStarted = False
                     self.out1.release()
                     self.out1 = None
-            else:    # NOT angle < -12 or angle > 14
+            else:  # NOT angle < -12 or angle > 14
                 if self.postureTimerStarted:
                     self.postureTimerStarted = False
                     self.out1.release()
@@ -171,7 +170,6 @@ class YoloVideoSelf:
     def slopeOf(self, x1, y1, x2, y2):
         m = (y2 - y1) / (x2 - x1)
         return m
-
 
 # class Thread2(QThread):
 #

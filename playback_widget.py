@@ -42,9 +42,10 @@ class VideoPlayer(QWidget):
         # Create layouts to place inside widget
         controlLayout = QHBoxLayout()
         controlLayout.setContentsMargins(0, 0, 0, 0)
+        controlLayout.addWidget(self.openButton)
         controlLayout.addWidget(self.playButton)
         controlLayout.addWidget(self.positionSlider)
-        controlLayout.addWidget(self.openButton)
+
 
         layout = QVBoxLayout()
         layout.addWidget(videoWidget)
