@@ -1,6 +1,9 @@
 # USB camera display using PyQt and OpenCV, from iosoft.blog
 # Copyright (c) Jeremy P Bentham 2019
 # Please credit iosoft.blog if you use the information or software in it
+from PyQt5.Qt3DRender import QCamera
+from PyQt5.QtMultimedia import QCameraInfo, QCameraImageCapture
+
 from live_widget import LiveWidget
 from playback_widget import VideoPlayer
 from yolo_formatter import YoloVideoSelf
@@ -8,8 +11,8 @@ from yolo_formatter import YoloVideoSelf
 VERSION = "Heads-Up v0.10"
 
 import sys, time, threading, cv2
-from PyQt5.QtCore import QTimer, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QTabWidget
+from PyQt5.QtCore import QTimer, pyqtSignal, pyqtSlot, QSize
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QTabWidget, QToolBar, QComboBox
 from PyQt5.QtWidgets import QWidget, QAction, QVBoxLayout, QHBoxLayout
 from PyQt5.QtGui import QFont, QImage, QTextCursor
 
@@ -18,6 +21,7 @@ try:
 except:
     import queue as Queue
 
+camera_num = 1
 IMG_SIZE = 1920, 1080  # 640,480 or 1280,720 or 1920,1080    --
 IMG_FORMAT = QImage.Format_RGB888
 DISP_SCALE = 2  # Scaling factor for display image
@@ -25,15 +29,12 @@ DISP_MSEC = 50  # Delay between display cycles
 CAP_API = cv2.CAP_ANY  # API: CAP_ANY or CAP_DSHOW etc...
 EXPOSURE = 0  # Zero for automatic exposure
 TEXT_FONT = QFont("Courier", 10)
-
-camera_num = 0  # Default camera (first in list)
 image_queue = Queue.Queue()  # Queue to hold images
 capturing = True  # Flag to indicate capturing
 
-
 # Grab images from the camera (separate thread)
-def grab_images(cam_num, queue, self=None):
-    cap = cv2.VideoCapture(camera_num)
+def grab_images(cam_num, queue, stop, self=None):
+    cap = cv2.VideoCapture(cam_num)
     neural_network = cv2.dnn.readNet("yolov4-tiny_best-5.weights", "yolov4-tiny-5.cfg")
     neural_network.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
     neural_network.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
@@ -62,6 +63,10 @@ def grab_images(cam_num, queue, self=None):
         else:
             print("Error: can't grab camera image")
             break
+
+        if stop():
+            break
+    print("released")
     cap.release()
 
 
@@ -70,6 +75,33 @@ class MyWindow(QMainWindow):
 
     # Create main window
     def __init__(self, parent=None):
+        # self.available_cameras = QCameraInfo.availableCameras()
+        # if not self.available_cameras:
+        #     pass  # quit
+        #
+        # is_working = True
+        # dev_port = 0
+        # working_ports = []
+        # available_ports = []
+        # while is_working:
+        #     camera = cv2.VideoCapture(dev_port)
+        #     if not camera.isOpened():
+        #         is_working = False
+        #         print("Port %s is not working." % dev_port)
+        #     else:
+        #         is_reading, img = camera.read()
+        #         w = camera.get(3)
+        #         h = camera.get(4)
+        #         if is_reading:
+        #             print("Port %s is working and reads images (%s x %s)" % (dev_port, h, w))
+        #             working_ports.append(dev_port)
+        #         else:
+        #             print("Port %s for camera ( %s x %s) is present but does not reads." % (dev_port, h, w))
+        #             available_ports.append(dev_port)
+        #     dev_port += 1
+        #
+        # print(str(available_ports))
+
         QMainWindow.__init__(self, parent)
         self.qWidget = QWidget(self)
         sys.stdout = self
@@ -82,6 +114,19 @@ class MyWindow(QMainWindow):
         self.tabs = QTabWidget()
         self.tab1 = QWidget()
         self.tab2 = QWidget()
+
+        camera_toolbar = QToolBar("Camera")
+        camera_toolbar.setIconSize(QSize(14, 14))
+        self.addToolBar(camera_toolbar)
+        self.stop_capture_thread = False
+        self.available_cameras = QCameraInfo.availableCameras()
+        if not self.available_cameras:
+            pass #quit
+        camera_selector = QComboBox()
+        camera_selector.addItems([c.description() for c in self.available_cameras])
+        camera_selector.currentIndexChanged.connect(self.restart)
+
+        camera_toolbar.addWidget(camera_selector)
 
         # Add tabs
         self.tabs.addTab(self.tab1, "Live")
@@ -122,14 +167,26 @@ class MyWindow(QMainWindow):
         for currentQTableWidgetItem in self.tableWidget.selectedItems():
             print(currentQTableWidgetItem.row(), currentQTableWidgetItem.column(), currentQTableWidgetItem.text())
 
-    # Start image capture & display
+        # Start image capture & display
     def start(self):
         self.timer = QTimer(self)  # Timer to trigger display
         self.timer.timeout.connect(lambda:
                                    self.show_image(image_queue, self.liveWidget, DISP_SCALE))
         self.timer.start(DISP_MSEC)
+        self.stop_capture_thread = False
         self.capture_thread = threading.Thread(target=grab_images,
-                                               args=(camera_num, image_queue))
+                                               args=(camera_num, image_queue, lambda : self.stop_capture_thread))
+        self.capture_thread.start()  # Thread to grab images
+
+       # Restart image capture & display
+    def restart(self, i):
+        print("restart")
+        print(i)
+        self.stop_capture_thread = True
+        time.sleep(1)
+        self.stop_capture_thread = False
+        self.capture_thread = threading.Thread(target=grab_images,
+                                               args=(i, image_queue, lambda : self.stop_capture_thread))
         self.capture_thread.start()  # Thread to grab images
 
     # Fetch camera image from queue, and display it
