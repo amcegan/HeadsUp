@@ -1,13 +1,13 @@
 import sys
 import time
 
+import PyQt5
+from PyQt5 import QtCore
 from PyQt5.QtCore import Qt, QDir, QUrl
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
-from PyQt5.QtWidgets import QWidget, QPushButton, QStyle, QSlider, QLabel, QSizePolicy, QHBoxLayout, QVBoxLayout, \
-    QFileDialog
-from PyQt5.uic.properties import QtGui
-
+from PyQt5.QtWidgets import QWidget, QPushButton, QStyle, QSlider, QLabel, \
+    QSizePolicy, QHBoxLayout, QVBoxLayout, QFileDialog
 
 class VideoPlayer(QWidget):
     def __init__(self, parent=None):
@@ -46,7 +46,6 @@ class VideoPlayer(QWidget):
         controlLayout.addWidget(self.playButton)
         controlLayout.addWidget(self.positionSlider)
 
-
         layout = QVBoxLayout()
         layout.addWidget(videoWidget)
         layout.addLayout(controlLayout)
@@ -61,6 +60,23 @@ class VideoPlayer(QWidget):
         self.mediaPlayer.positionChanged.connect(self.positionChanged)
         self.mediaPlayer.durationChanged.connect(self.durationChanged)
         self.mediaPlayer.error.connect(self.handleError)
+        self.installEventFilter(self)
+
+    def eventFilter(self, object, event):
+        if event.type() == 13 or event.type() == 17: # Move or Showevent
+            self.openLatestFile()
+        return False
+
+
+    def openLatestFile(self):
+            self.mediaPlayer.setMedia(
+                QMediaContent(QUrl.fromLocalFile('/Users/anth/projects/HeadsUp/camera/2022-05-06__12-55-47/video.mp4')))
+            self.playButton.setEnabled(True)
+
+            # place a video frame in the playback widget
+            self.play()
+            time.sleep(.01)
+            self.play()
 
     def openFile(self):
         fileName, _ = QFileDialog.getOpenFileName(self, "Open Movie",
