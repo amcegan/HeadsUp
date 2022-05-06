@@ -131,10 +131,11 @@ class YoloVideoSelf:
                     self.postureTimerStarted = True
                     self.startTime = time.time()
                     print("************ Timer started now =", current_time + '************')
-                    self.direct = 'camera/' + datetime.now().strftime('%Y-%m-%d__%H-%M-%S')
-                    os.makedirs(self.direct)  # important step
+                    self.direct = 'camera'
+                    # os.makedirs(self.direct)  # important step
+                    fileName = datetime.now().strftime('%Y-%m-%d__%H-%M-%S')
                     self.out1 = cv2.VideoWriter(
-                        os.path.join(self.direct, 'video.mp4'),
+                        os.path.join(self.direct, fileName + '.mp4'),
                         self.fourcc, 10.0, (self.width, self.height))
                 timedOut = time.time() - self.startTime > 5
                 # print('timed out ' + str(timedOut))

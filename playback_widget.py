@@ -1,13 +1,13 @@
-import sys
+import glob
+import os
 import time
 
-import PyQt5
-from PyQt5 import QtCore
 from PyQt5.QtCore import Qt, QDir, QUrl
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtWidgets import QWidget, QPushButton, QStyle, QSlider, QLabel, \
     QSizePolicy, QHBoxLayout, QVBoxLayout, QFileDialog
+
 
 class VideoPlayer(QWidget):
     def __init__(self, parent=None):
@@ -51,7 +51,6 @@ class VideoPlayer(QWidget):
         layout.addLayout(controlLayout)
         layout.addWidget(self.error)
 
-
         # Set widget to contain window contents
         self.setLayout(layout)
 
@@ -63,20 +62,22 @@ class VideoPlayer(QWidget):
         self.installEventFilter(self)
 
     def eventFilter(self, object, event):
-        if event.type() == 13 or event.type() == 17: # Move or Showevent
+        if event.type() == 13 or event.type() == 17:  # Move or Showevent
             self.openLatestFile()
         return False
 
-
     def openLatestFile(self):
-            self.mediaPlayer.setMedia(
-                QMediaContent(QUrl.fromLocalFile('/Users/anth/projects/HeadsUp/camera/2022-05-06__12-55-47/video.mp4')))
-            self.playButton.setEnabled(True)
+        currentDir = os.path.dirname(os.path.abspath(__file__))
+        list_of_files = glob.glob(currentDir + '/camera/*')  # * means all if need specific format then *.csv
+        latest_file = max(list_of_files, key=os.path.getctime)
+        self.mediaPlayer.setMedia(
+            QMediaContent(QUrl.fromLocalFile(latest_file)))
+        self.playButton.setEnabled(True)
 
-            # place a video frame in the playback widget
-            self.play()
-            time.sleep(.01)
-            self.play()
+        # place a video frame in the playback widget
+        self.play()
+        time.sleep(.01)
+        self.play()
 
     def openFile(self):
         fileName, _ = QFileDialog.getOpenFileName(self, "Open Movie",
