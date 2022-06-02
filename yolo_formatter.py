@@ -4,6 +4,8 @@ from cv2 import cv2
 import numpy as np
 import time
 import os
+import yaml
+from munch import munchify
 from datetime import datetime
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot
 
@@ -12,6 +14,10 @@ class YoloVideoSelf:
     # we are not going to bother with objects less than 30% probability
 
     def __init__(self):
+        settings = munchify(yaml.safe_load(open("config/config.yml")))
+        self.RECORD_FOLDER = settings.record_folder
+        self.record_FileName = None
+
         self.THRESHOLD = 0.2
         # the lower the value: the fewer bounding boxes will remain
         self.SUPPRESSION_THRESHOLD = 0.4
@@ -24,7 +30,7 @@ class YoloVideoSelf:
         self.width = None
         self.height = None
         # Define the codec and create VideoWriter object
-        self.fourcc = None
+        self.writer = None
         self.out = None
         self.camera_num = None
         self.th2 = None
@@ -32,9 +38,8 @@ class YoloVideoSelf:
         self.path = None
         self.capture = None
         self.out1 = None
-        self.direct = None
 
-        self.freezeVideo = 4
+        self.freezeVideoTime = 4
         self.posteriorAngle = -12
         self.anteriorAngle = 12
 
@@ -53,8 +58,8 @@ class YoloVideoSelf:
         # output_names = [layer_names[index[0] - 1] for index in neural_network.getUnconnectedOutLayers()]
         output_names = [layer_names[65], layer_names[77]]
 
-        outputs = neural_network.forward(output_names)
-        predicted_objects, bbox_locations, class_label_ids, conf_values = self.find_objects(outputs)
+        model_outputs = neural_network.forward(output_names)
+        predicted_objects, bbox_locations, class_label_ids, conf_values = self.find_objects(model_outputs)
         self.show_detected_objects(frame, predicted_objects, bbox_locations, class_label_ids, conf_values,
                                    original_width / self.YOLO_IMAGE_SIZE, original_height / self.YOLO_IMAGE_SIZE)
 
@@ -120,23 +125,23 @@ class YoloVideoSelf:
         if earFound & noseFound:
             slope = self.slopeOf(ear[0], ear[1], nose[0], nose[1])
             angle = np.arctan(slope) * 57.2958
-            cv2.putText(img, 'Angle :' + str(int(angle)), (1500, 1000), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 0), 3)
+            cv2.putText(img, 'Angle :' + str(int(angle)), (1500, 1000), cv2.FONT_HERSHEY_PLAIN, 3, (255, 255, 255), 3)
             cv2.line(img, nose, ear, (255, 255, 255), 3)
 
             now = datetime.now().time()  # time object
             current_time = now.strftime("%H:%M:%S")
+
+
             if angle < self.posteriorAngle or angle > self.anteriorAngle:
-                print('Angle is ' + str(int(angle)) + '  at ' + current_time)
+                #print('Angle is ' + str(int(angle)) + '  at ' + current_time)
                 if not self.postureTimerStarted:
                     self.postureTimerStarted = True
                     self.startTime = time.time()
                     print("************ Timer started now =", current_time + '************')
-                    self.direct = 'camera'
-                    # os.makedirs(self.direct)  # important step
-                    fileName = datetime.now().strftime('%Y-%m-%d__%H-%M-%S')
-                    self.out1 = cv2.VideoWriter(
-                        os.path.join(self.direct, fileName + '.mp4'),
-                        self.fourcc, 10.0, (self.width, self.height))
+                    # os.makedirs(self.folder)  # important step
+                    self.record_FileName = datetime.now().strftime('%Y-%m-%d__%H-%M-%S') + '.mp4'
+                    self.out1 = cv2.VideoWriter(os.path.join(self.RECORD_FOLDER, self.record_FileName),
+                        self.writer, 10.0, (self.width, self.height))
                 timedOut = time.time() - self.startTime > 5
                 # print('timed out ' + str(timedOut))
                 if timedOut and self.postureTimerStarted:
@@ -146,7 +151,7 @@ class YoloVideoSelf:
                     file = "3.wav"
                     os.system("afplay " + file)
                     print('*************** wav *******************')
-                    time.sleep(self.freezeVideo)
+                    time.sleep(self.freezeVideoTime)
                     self.postureTimerStarted = False
                     self.out1.release()
                     self.out1 = None
@@ -156,11 +161,15 @@ class YoloVideoSelf:
                     self.out1.release()
                     self.out1 = None
                     try:
-                        if os.path.isfile(os.path.join(self.direct, 'video.mp4')):
-                            os.remove(os.path.join(self.direct, 'video.mp4'))
-                            shutil.rmtree(self.direct)
-                        else:
-                            print("Error: %s file not found" % os.path.join(self.direct, 'video.mp4'))
+                        print("trying to remove ", self.RECORD_FOLDER + self.record_FileName )
+                        recordFolderPath = os.path.dirname(os.path.abspath(__file__)) + self.RECORD_FOLDER
+                        print("trying to remove ", recordFolderPath + self.record_FileName)
+                        print(str(os.path.join(recordFolderPath, self.record_FileName)))
+                        if os.path.isfile(os.path.join(self.RECORD_FOLDER, self.record_FileName)):
+                            print("@@@@@@@@@@@   removing ", self.record_FileName)
+                            os.remove(os.path.join(self.RECORD_FOLDER, self.record_FileName))
+                            print("@@@@@@@@@   removed ", self.record_FileName)
+                           # shutil.rmtree(self.RECORD_FOLDER)
                     except OSError as e:  ## if failed, report it back to the user ##
                         print("Error: %s - %s." % (e.filename, e.strerror))
                     print('********  reset timer ************')
@@ -191,11 +200,11 @@ class YoloVideoSelf:
 #             # !!!                             # установите свой путь !!!
 #             direct = 'camera/' + datetime.now().strftime('%Y-%m-%d__%H-%M-%S')
 #             self.path = os.makedirs(direct)
-#             self.fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+#             self.writer = cv2.VideoWriter_fourcc(*'mp4v')
 #             # !!!                                             # установите свой путь !!!
 #             self.out1 = cv2.VideoWriter(
 #                 os.path.join(direct, 'video.mp4'),
-#                 self.fourcc, 20.0, (width, height))
+#                 self.writer, 20.0, (width, height))
 #             #            while True:
 #             while self.active:  # +
 #                 ret1, image1 = self.cap.read()

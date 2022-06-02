@@ -1,6 +1,9 @@
 import glob
 import os
 import time
+import yaml
+from munch import munchify
+
 
 from PyQt5.QtCore import Qt, QDir, QUrl
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
@@ -8,11 +11,13 @@ from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtWidgets import QWidget, QPushButton, QStyle, QSlider, QLabel, \
     QSizePolicy, QHBoxLayout, QVBoxLayout, QFileDialog
 
+RECORD_FOLDER = None
 
 class VideoPlayer(QWidget):
     def __init__(self, parent=None):
         super(VideoPlayer, self).__init__(parent)
-
+        settings = munchify(yaml.safe_load(open("config/config.yml")))
+        self.RECORD_FOLDER = settings.record_folder
         self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
 
         videoWidget = QVideoWidget()
@@ -68,7 +73,7 @@ class VideoPlayer(QWidget):
 
     def openLatestFile(self):
         currentDir = os.path.dirname(os.path.abspath(__file__))
-        list_of_files = glob.glob(currentDir + '/camera/*')  # * means all if need specific format then *.csv
+        list_of_files = glob.glob(currentDir + '/' + self.RECORD_FOLDER + '/*')  # * means all if need specific format then *.csv
         latest_file = max(list_of_files, key=os.path.getctime)
         self.mediaPlayer.setMedia(
             QMediaContent(QUrl.fromLocalFile(latest_file)))
@@ -81,7 +86,7 @@ class VideoPlayer(QWidget):
 
     def openFile(self):
         fileName, _ = QFileDialog.getOpenFileName(self, "Open Movie",
-                                                  QDir.path(QDir("camera")))
+                                                  QDir.path(QDir(self.RECORD_FOLDER)))
 
         if fileName != '':
             self.mediaPlayer.setMedia(

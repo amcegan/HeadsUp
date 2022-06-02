@@ -77,7 +77,7 @@ class MyWindow(QMainWindow):
         self.tab1.layout.addWidget(self.liveWidget)
         self.tab1.setLayout(self.tab1.layout)
 
-        # Create first tab
+        # Create 2nd tab
         self.tab2.layout = QVBoxLayout()
         self.playBackWidget = VideoPlayer(self)
         self.tab2.layout.addWidget(self.playBackWidget)
@@ -190,15 +190,15 @@ def grab_images(cam_num, queue, stop, self=None):
 
     cap = cv2.VideoCapture(cam_num)
     time.sleep(0.5)  # Need this timer here for MackBookPro Camera to work
-    neural_network = cv2.dnn.readNet("yolov4-tiny_best-5.weights", "yolov4-tiny-5.cfg")
+    neural_network = cv2.dnn.readNet("config/yolov4-tiny_best-5.weights", "config/yolov4-tiny-5.cfg")
     neural_network.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
     neural_network.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
     yoloVideoSelf = YoloVideoSelf()
     yoloVideoSelf.width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) + 0.5)
     yoloVideoSelf.height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT) + 0.5)
     # Define the codec and create VideoWriter object
-    yoloVideoSelf.fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Be sure to use the lower case
-    # yoloVideoSelf.out = cv2.VideoWriter('output.mp4', yoloVideoSelf.fourcc, 20.0, (yoloVideoSelf.width, yoloVideoSelf.height))
+    yoloVideoSelf.writer = cv2.VideoWriter_fourcc(*'mp4v')  # Be sure to use the lower case
+    # yoloVideoSelf.out = cv2.VideoWriter('output.mp4', yoloVideoSelf.writer, 20.0, (yoloVideoSelf.width, yoloVideoSelf.height))
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, IMG_SIZE[0])
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, IMG_SIZE[1])
     if EXPOSURE:
