@@ -1,5 +1,3 @@
-import shutil
-
 from cv2 import cv2
 import numpy as np
 import time
@@ -7,16 +5,13 @@ import os
 import yaml
 from munch import munchify
 from datetime import datetime
-from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot
 
 
 class YoloVideoSelf:
-    # we are not going to bother with objects less than 30% probability
-
     def __init__(self):
         settings = munchify(yaml.safe_load(open("config/config.yml")))
         self.RECORD_FOLDER = settings.record_folder
-        self.record_FileName = None
+        self.recordFileName = None
 
         self.THRESHOLD = 0.2
         # the lower the value: the fewer bounding boxes will remain
@@ -26,26 +21,18 @@ class YoloVideoSelf:
         self.postureTimerStarted = False
 
         # Video Capture
-        # Get the width and height of frame
+        # Width and height of frame
         self.width = None
         self.height = None
         # Define the codec and create VideoWriter object
-        self.writer = None
-        self.out = None
-        self.camera_num = None
-        self.th2 = None
+        self.codec = None
+        self.vidWriter = None
 
-        self.path = None
-        self.capture = None
-        self.out1 = None
-
-        self.freezeVideoTime = 4
-        self.posteriorAngle = -12
+        self.freezeVideoTime = 3
+        self.posteriorAngle = -13
         self.anteriorAngle = 12
 
-    def processFrame(self, frame, neural_network, capture, camera_num):
-        self.camera_num = camera_num
-        self.capture = capture
+    def processFrame(self, frame, neural_network):
         original_width, original_height = frame.shape[1], frame.shape[0]
         #  print('Dim ' + str(original_width) + ' ' + str(original_width))
         # the image into a BLOB [0-1] RGB - BGR
@@ -139,9 +126,9 @@ class YoloVideoSelf:
                     self.startTime = time.time()
                     print("************ Timer started now =", current_time + '************')
                     # os.makedirs(self.folder)  # important step
-                    self.record_FileName = datetime.now().strftime('%Y-%m-%d__%H-%M-%S') + '.mp4'
-                    self.out1 = cv2.VideoWriter(os.path.join(self.RECORD_FOLDER, self.record_FileName),
-                        self.writer, 10.0, (self.width, self.height))
+                    self.recordFileName = datetime.now().strftime('%Y-%m-%d__%H-%M-%S') + '.mp4'
+                    self.vidWriter = cv2.VideoWriter(os.path.join(self.RECORD_FOLDER, self.recordFileName),
+                                                     self.codec, 10.0, (self.width, self.height))
                 timedOut = time.time() - self.startTime > 5
                 # print('timed out ' + str(timedOut))
                 if timedOut and self.postureTimerStarted:
@@ -153,66 +140,30 @@ class YoloVideoSelf:
                     print('*************** wav *******************')
                     time.sleep(self.freezeVideoTime)
                     self.postureTimerStarted = False
-                    self.out1.release()
-                    self.out1 = None
+                    self.vidWriter.release()
+                    self.vidWriter = None
             else:  # NOT angle < -12 or angle > 14
                 if self.postureTimerStarted:
                     self.postureTimerStarted = False
-                    self.out1.release()
-                    self.out1 = None
+                    self.vidWriter.release()
+                    self.vidWriter = None
                     try:
-                        print("trying to remove ", self.RECORD_FOLDER + self.record_FileName )
+                        print("trying to remove ", self.RECORD_FOLDER + self.recordFileName)
                         recordFolderPath = os.path.dirname(os.path.abspath(__file__)) + self.RECORD_FOLDER
-                        print("trying to remove ", recordFolderPath + self.record_FileName)
-                        print(str(os.path.join(recordFolderPath, self.record_FileName)))
-                        if os.path.isfile(os.path.join(self.RECORD_FOLDER, self.record_FileName)):
-                            print("@@@@@@@@@@@   removing ", self.record_FileName)
-                            os.remove(os.path.join(self.RECORD_FOLDER, self.record_FileName))
-                            print("@@@@@@@@@   removed ", self.record_FileName)
+                        print("trying to remove ", recordFolderPath + self.recordFileName)
+                        print(str(os.path.join(recordFolderPath, self.recordFileName)))
+                        if os.path.isfile(os.path.join(self.RECORD_FOLDER, self.recordFileName)):
+                            print("@@@@@@@@@@@   removing ", self.recordFileName)
+                            os.remove(os.path.join(self.RECORD_FOLDER, self.recordFileName))
+                            print("@@@@@@@@@   removed ", self.recordFileName)
                            # shutil.rmtree(self.RECORD_FOLDER)
                     except OSError as e:  ## if failed, report it back to the user ##
                         print("Error: %s - %s." % (e.filename, e.strerror))
                     print('********  reset timer ************')
 
         if self.postureTimerStarted:
-            self.out1.write(img)
+            self.vidWriter.write(img)
 
     def slopeOf(self, x1, y1, x2, y2):
         m = (y2 - y1) / (x2 - x1)
         return m
-
-# class Thread2(QThread):
-#
-#     def __init__(self, name, camera_num):
-#         self.cap = cv2.VideoCapture(self.camera_num)
-#         print('name ' + str(name))
-#         super().__init__()
-#         self.active = True
-#         print('C ' + str(camera_num))
-#         print('N ' + str(name))
-#         self.camera_num = camera_num
-#         self.fileName = name
-#
-#     def run(self):
-#         if self.active:
-#             width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH) + 0.5)
-#             height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT) + 0.5)
-#             # !!!                             # установите свой путь !!!
-#             direct = 'camera/' + datetime.now().strftime('%Y-%m-%d__%H-%M-%S')
-#             self.path = os.makedirs(direct)
-#             self.writer = cv2.VideoWriter_fourcc(*'mp4v')
-#             # !!!                                             # установите свой путь !!!
-#             self.out1 = cv2.VideoWriter(
-#                 os.path.join(direct, 'video.mp4'),
-#                 self.writer, 20.0, (width, height))
-#             #            while True:
-#             while self.active:  # +
-#                 ret1, image1 = self.cap.read()
-#                 if ret1:
-#                     self.out1.write(image1)
-#                 self.msleep(1)  # +
-#
-#     def stop(self):
-#         print('2.1')
-#         #        if self.active == False:
-#         self.out1.release()

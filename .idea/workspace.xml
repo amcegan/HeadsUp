@@ -1,16 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="8fad6ca7-7471-4654-9a37-f6dad5ff683a" name="Changes" comment="Load latest video in player. &#10;Unfinished; need global variable for video storage folder">
-      <change afterPath="$PROJECT_DIR$/config/config.yml" afterDir="false" />
+    <list default="true" id="8fad6ca7-7471-4654-9a37-f6dad5ff683a" name="Changes" comment="Added YAML File and fixed issue with creating deleting record file">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/HeadsUp.py" beforeDir="false" afterPath="$PROJECT_DIR$/HeadsUp.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/log.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/playback_widget.py" beforeDir="false" afterPath="$PROJECT_DIR$/playback_widget.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/yolo_formatter.py" beforeDir="false" afterPath="$PROJECT_DIR$/yolo_formatter.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/yolov4-tiny-5.cfg" beforeDir="false" afterPath="$PROJECT_DIR$/config/yolov4-tiny-5.cfg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/yolov4-tiny_best-5.weights" beforeDir="false" afterPath="$PROJECT_DIR$/config/yolov4-tiny_best-5.weights" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -27,15 +21,21 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$USER_HOME$/Library/Caches/JetBrains/PyCharmCE2021.2/python_stubs/-1199943124/cv2/cv2/VideoWriter.py" root0="SKIP_INSPECTION" />
+    <setting file="file://$USER_HOME$/Library/Caches/JetBrains/PyCharmCE2021.2/python_stubs/-1199943124/cv2/cv2/VideoCapture.py" root0="SKIP_INSPECTION" />
+  </component>
   <component name="ProjectId" id="22H0zAODXAhKOYk65Zc9oFsvhQd" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="editor.reader.mode" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
@@ -213,12 +213,51 @@
       <option name="project" value="LOCAL" />
       <updated>1651864323774</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="Added YAML File and fixed issue with creating deleting record file">
+      <created>1654171515500</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1654171515500</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
       <map>
+        <entry key="1d071b81-c01b-480c-842d-dab2d6643cde">
+          <value>
+            <State>
+              <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="HEAD" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="roots">
+                    <value>
+                      <list>
+                        <option value="$PROJECT_DIR$" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+              <option name="COLUMN_ID_WIDTH">
+                <map>
+                  <entry key="Table.Default.Author.ColumnIdWidth" value="190" />
+                  <entry key="Table.Default.Date.ColumnIdWidth" value="225" />
+                  <entry key="Table.Space.CommitStatus.ColumnIdWidth" value="177" />
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
         <entry key="MAIN">
           <value>
             <State />
@@ -226,15 +265,22 @@
         </entry>
       </map>
     </option>
+    <option name="OPEN_GENERIC_TABS">
+      <map>
+        <entry key="1d071b81-c01b-480c-842d-dab2d6643cde" value="TOOL_WINDOW" />
+      </map>
+    </option>
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
+    <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
     <MESSAGE value="test commit" />
     <MESSAGE value="Remove Text Box.&#10;Move Open video file button" />
     <MESSAGE value="Bug fix : MacBook cam not working" />
     <MESSAGE value="Load latest video in player. Unfinished" />
     <MESSAGE value="Load latest video in player. &#10;Unfinished; need global variable for video storage folder" />
-    <option name="LAST_COMMIT_MESSAGE" value="Load latest video in player. &#10;Unfinished; need global variable for video storage folder" />
+    <MESSAGE value="Added YAML File and fixed issue with creating deleting record file" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added YAML File and fixed issue with creating deleting record file" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -256,7 +302,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/HeadsUp.py</url>
-          <line>190</line>
+          <line>192</line>
           <option name="timeStamp" value="10" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">

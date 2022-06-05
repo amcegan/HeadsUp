@@ -32,12 +32,13 @@ TEXT_FONT = QFont("Courier", 10)
 image_queue = Queue.Queue()  # Queue to hold images
 capturing = True  # Flag to indicate capturing
 
+
 class MyWindow(QMainWindow):
     text_update = pyqtSignal(str)
 
     # Create main window
     def __init__(self, parent=None):
-        #self.deBugLogPorts()
+        # self.deBugLogPorts()
         QMainWindow.__init__(self, parent)
         self.qWidget = QWidget(self)
         # sys.stdout = self
@@ -58,7 +59,7 @@ class MyWindow(QMainWindow):
         self.available_cameras = QCameraInfo.availableCameras()
         print(self.available_cameras)
         if not self.available_cameras:
-            pass #quit
+            pass  # quit
         camera_selector = QComboBox()
         # print(''.join([c.description() for c in self.available_cameras]))
         camera_selector.addItems([c.description() for c in self.available_cameras])
@@ -133,6 +134,7 @@ class MyWindow(QMainWindow):
             print(currentQTableWidgetItem.row(), currentQTableWidgetItem.column(), currentQTableWidgetItem.text())
 
         # Start image capture & display
+
     def start(self):
         self.timer = QTimer(self)  # Timer to trigger display
         self.timer.timeout.connect(lambda:
@@ -140,16 +142,16 @@ class MyWindow(QMainWindow):
         self.timer.start(DISP_MSEC)
         self.stop_capture_thread = False
         self.capture_thread = threading.Thread(target=grab_images,
-                                               args=(camera_num, image_queue, lambda : self.stop_capture_thread))
+                                               args=(camera_num, image_queue, lambda: self.stop_capture_thread))
         self.capture_thread.start()  # Thread to grab images
 
-       # Restart image capture & display
+    # Restart image capture & display
     def restart(self, i):
         self.stop_capture_thread = True
         time.sleep(1)
         self.stop_capture_thread = False
         self.capture_thread = threading.Thread(target=grab_images,
-                                               args=(i, image_queue, lambda : self.stop_capture_thread))
+                                               args=(i, image_queue, lambda: self.stop_capture_thread))
         self.capture_thread.start()  # Thread to grab images
 
     # Fetch camera image from queue, and display it
@@ -185,32 +187,32 @@ class MyWindow(QMainWindow):
         capturing = False
         self.capture_thread.join()
 
+
 # Grab images from the camera (separate thread)
 def grab_images(cam_num, queue, stop, self=None):
-
-    cap = cv2.VideoCapture(cam_num)
+    capture = cv2.VideoCapture(cam_num)
     time.sleep(0.5)  # Need this timer here for MackBookPro Camera to work
     neural_network = cv2.dnn.readNet("config/yolov4-tiny_best-5.weights", "config/yolov4-tiny-5.cfg")
     neural_network.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
     neural_network.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
     yoloVideoSelf = YoloVideoSelf()
-    yoloVideoSelf.width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) + 0.5)
-    yoloVideoSelf.height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT) + 0.5)
-    # Define the codec and create VideoWriter object
-    yoloVideoSelf.writer = cv2.VideoWriter_fourcc(*'mp4v')  # Be sure to use the lower case
-    # yoloVideoSelf.out = cv2.VideoWriter('output.mp4', yoloVideoSelf.writer, 20.0, (yoloVideoSelf.width, yoloVideoSelf.height))
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, IMG_SIZE[0])
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, IMG_SIZE[1])
+    yoloVideoSelf.width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH) + 0.5)
+    yoloVideoSelf.height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT) + 0.5)
+    # Codec = 7634706D in HEX
+    yoloVideoSelf.codec = cv2.VideoWriter_fourcc(*'mp4v')  # Be sure to use the lower case
+
+    capture.set(cv2.CAP_PROP_FRAME_WIDTH, IMG_SIZE[0])
+    capture.set(cv2.CAP_PROP_FRAME_HEIGHT, IMG_SIZE[1])
     if EXPOSURE:
-        cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
-        cap.set(cv2.CAP_PROP_EXPOSURE, EXPOSURE)
+        capture.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
+        capture.set(cv2.CAP_PROP_EXPOSURE, EXPOSURE)
     else:
-        cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
+        capture.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
     while capturing:
-        if cap.grab():
-            retval, image = cap.retrieve(0)
+        if capture.grab():
+            retval, image = capture.retrieve(0)
             if image is not None and queue.qsize() < 2:
-                yoloVideoSelf.processFrame(image, neural_network, cap, camera_num)
+                yoloVideoSelf.processFrame(image, neural_network)
                 queue.put(image)
             else:
                 time.sleep(DISP_MSEC / 1000.0)
@@ -220,7 +222,8 @@ def grab_images(cam_num, queue, stop, self=None):
 
         if stop():
             break
-    cap.release()
+    capture.release()
+
 
 if __name__ == '__main__':
     app = QApplication([])
