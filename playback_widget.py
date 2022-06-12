@@ -11,13 +11,13 @@ from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtWidgets import QWidget, QPushButton, QStyle, QSlider, QLabel, \
     QSizePolicy, QHBoxLayout, QVBoxLayout, QFileDialog
 
-RECORD_FOLDER = None
+RECORD_FOLDER_POOR = None
 
 class VideoPlayer(QWidget):
     def __init__(self, parent=None):
         super(VideoPlayer, self).__init__(parent)
         settings = munchify(yaml.safe_load(open("config/config.yml")))
-        self.RECORD_FOLDER_POOR = settings.record
+        self.RECORD_FOLDER_POOR = settings.record_folder_poor
         self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
 
         videoWidget = QVideoWidget()
@@ -73,20 +73,23 @@ class VideoPlayer(QWidget):
 
     def openLatestFile(self):
         currentDir = os.path.dirname(os.path.abspath(__file__))
-        list_of_files = glob.glob(currentDir + '/' + self.RECORD_FOLDER + '/*')  # * means all if need specific format then *.csv
-        latest_file = max(list_of_files, key=os.path.getctime)
-        self.mediaPlayer.setMedia(
-            QMediaContent(QUrl.fromLocalFile(latest_file)))
-        self.playButton.setEnabled(True)
+        list_of_files = glob.glob(currentDir + '/' + self.RECORD_FOLDER_POOR + '/*')  # * means all if need specific format then *.csv
+        print(str(list_of_files))
+        if list_of_files and len(list_of_files) != 0:  # Empty list
+            print(str(list_of_files))
+            latest_file = max(list_of_files, key=os.path.getctime)
+            self.mediaPlayer.setMedia(
+                QMediaContent(QUrl.fromLocalFile(latest_file)))
+            self.playButton.setEnabled(True)
 
-        # place a video frame in the playback widget
-        self.play()
-        time.sleep(.01)
-        self.play()
+            # place a video frame in the playback widget
+            self.play()
+            time.sleep(.01)
+            self.play()
 
     def openFile(self):
         fileName, _ = QFileDialog.getOpenFileName(self, "Open Movie",
-                                                  QDir.path(QDir(self.RECORD_FOLDER)))
+                                                  QDir.path(QDir(self.RECORD_FOLDER_POOR)))
 
         if fileName != '':
             self.mediaPlayer.setMedia(
