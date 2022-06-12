@@ -9,16 +9,21 @@ from datetime import datetime
 
 class YoloVideoSelf:
     def __init__(self):
+        print("************  Init YoloVideoSelf ************")
         settings = munchify(yaml.safe_load(open("config/config.yml")))
-        self.RECORD_FOLDER = settings.record_folder
-        self.recordFileName = None
+        self.RECORD_FOLDER_POOR = settings.record_folder_poor
+        self.RECORD_FOLDER_GOOD = settings.record_folder_good
+        self.poorPostureFile = None
+        self.goodPostureFile = None
 
         self.THRESHOLD = 0.2
         # the lower the value: the fewer bounding boxes will remain
         self.SUPPRESSION_THRESHOLD = 0.4
         self.YOLO_IMAGE_SIZE = 416
-        self.startTime = time.time()
-        self.postureTimerStarted = False
+        self.startPoorPostureTimer = time.time()
+        self.startGoodPostureTimer = time.time()
+        self.poorPostureTimerStarted = False
+        self.goodPostureTimerStarted = False
 
         # Video Capture
         # Width and height of frame
@@ -26,7 +31,8 @@ class YoloVideoSelf:
         self.height = None
         # Define the codec and create VideoWriter object
         self.codec = None
-        self.vidWriter = None
+        self.poorPostureVideoWriter = None
+        self.goodPostureVideoWriter = None
 
         self.freezeVideoTime = 3
         self.posteriorAngle = -13
@@ -118,51 +124,83 @@ class YoloVideoSelf:
             now = datetime.now().time()  # time object
             current_time = now.strftime("%H:%M:%S")
 
-
-            if angle < self.posteriorAngle or angle > self.anteriorAngle:
-                #print('Angle is ' + str(int(angle)) + '  at ' + current_time)
-                if not self.postureTimerStarted:
-                    self.postureTimerStarted = True
-                    self.startTime = time.time()
+            poorPosture = angle < self.posteriorAngle or angle > self.anteriorAngle
+            if poorPosture:
+                # print('Angle is ' + str(int(angle)) + '  at ' + current_time)
+                if not self.poorPostureTimerStarted:
+                    self.poorPostureTimerStarted = True
+                    self.startPoorPostureTimer = time.time()
                     print("************ Timer started now =", current_time + '************')
                     # os.makedirs(self.folder)  # important step
-                    self.recordFileName = datetime.now().strftime('%Y-%m-%d__%H-%M-%S') + '.mp4'
-                    self.vidWriter = cv2.VideoWriter(os.path.join(self.RECORD_FOLDER, self.recordFileName),
-                                                     self.codec, 10.0, (self.width, self.height))
-                timedOut = time.time() - self.startTime > 5
+                    self.poorPostureFile = datetime.now().strftime('%Y-%m-%d__%H-%M-%S') + '.mp4'
+                    self.poorPostureVideoWriter = cv2.VideoWriter(os.path.join(self.RECORD_FOLDER_POOR, self.poorPostureFile),
+                                                                  self.codec, 10.0, (self.width, self.height))
+                timedOut = time.time() - self.startPoorPostureTimer > 5
                 # print('timed out ' + str(timedOut))
-                if timedOut and self.postureTimerStarted:
-                    print("************ Timed out ", current_time + '************')
-                    # cv2.imwrite(str(self.startTime) + '.png', img)
-                    cv2.putText(img, 'Heads-Up', (1500, 1000), cv2.FONT_HERSHEY_PLAIN, 3, (255, 255, 0), 3)
-                    file = "3.wav"
-                    os.system("afplay " + file)
-                    print('*************** wav *******************')
-                    time.sleep(self.freezeVideoTime)
-                    self.postureTimerStarted = False
-                    self.vidWriter.release()
-                    self.vidWriter = None
+                if timedOut and self.poorPostureTimerStarted:
+                    # sound alarm, reset timer,  release video writer
+                    self.handleBadPostureAlarm(current_time, img)
             else:  # NOT angle < -12 or angle > 14
-                if self.postureTimerStarted:
-                    self.postureTimerStarted = False
-                    self.vidWriter.release()
-                    self.vidWriter = None
-                    try:
-                        print("trying to remove ", self.RECORD_FOLDER + self.recordFileName)
-                        recordFolderPath = os.path.dirname(os.path.abspath(__file__)) + self.RECORD_FOLDER
-                        print("trying to remove ", recordFolderPath + self.recordFileName)
-                        print(str(os.path.join(recordFolderPath, self.recordFileName)))
-                        if os.path.isfile(os.path.join(self.RECORD_FOLDER, self.recordFileName)):
-                            print("@@@@@@@@@@@   removing ", self.recordFileName)
-                            os.remove(os.path.join(self.RECORD_FOLDER, self.recordFileName))
-                            print("@@@@@@@@@   removed ", self.recordFileName)
-                           # shutil.rmtree(self.RECORD_FOLDER)
-                    except OSError as e:  ## if failed, report it back to the user ##
-                        print("Error: %s - %s." % (e.filename, e.strerror))
-                    print('********  reset timer ************')
+                if self.poorPostureTimerStarted:  # We were in poor posture
+                    self.handleReturnedToGoodPosture()
+                # Good posture
+                # self.startGoodPostureTimer = time.time()
+                if self.goodPostureVideoWriter is None:
+                    self.createGoodPostureWriter1()
 
-        if self.postureTimerStarted:
-            self.vidWriter.write(img)
+        if self.poorPostureTimerStarted:
+            self.poorPostureVideoWriter.write(img)
+        else:
+            if self.goodPostureVideoWriter is None:
+                self.createGoodPostureWriter2()
+            self.goodPostureVideoWriter.write(img)
+            if time.time() - self.startGoodPostureTimer > 10:
+                self.goodPostureVideoWriter.release()
+                self.goodPostureVideoWriter = None
+                self.startGoodPostureTimer = time.time()  # Reset timer
+                print("************ released createGoodPostureWriter ************")
+
+    def createGoodPostureWriter1(self):
+        print("************ createGoodPostureWriter 1 ************")
+        self.startGoodPostureTimer = time.time()
+        self.goodPostureFile = datetime.now().strftime('%Y-%m-%d__%H-%M-%S') + '.mp4'
+        self.goodPostureVideoWriter = cv2.VideoWriter(os.path.join(self.RECORD_FOLDER_GOOD, self.goodPostureFile),
+                                                      self.codec, 10.0, (self.width, self.height))
+        if self.goodPostureVideoWriter is None:
+            print("************ Failed to create createGoodPostureWriter 1 ************")
+
+    def createGoodPostureWriter2 (self):
+        print("************ createGoodPostureWriter 2 ************")
+        self.startGoodPostureTimer = time.time()
+        self.goodPostureFile = datetime.now().strftime('%Y-%m-%d__%H-%M-%S') + '.mp4'
+        self.goodPostureVideoWriter = cv2.VideoWriter(os.path.join(self.RECORD_FOLDER_GOOD, self.goodPostureFile),
+                                                      self.codec, 10.0, (self.width, self.height))
+        if self.goodPostureVideoWriter is None:
+            print("************ Failed to create createGoodPostureWriter 2 ************")
+
+    def handleReturnedToGoodPosture(self):
+        self.poorPostureTimerStarted = False
+        self.poorPostureVideoWriter.release()
+        self.poorPostureVideoWriter = None
+        try:
+            recordFolderPath = os.path.dirname(os.path.abspath(__file__)) + self.RECORD_FOLDER_POOR
+            # debug  print(str(os.path.join(recordFolderPath, self.recordFileName)))
+            if os.path.isfile(os.path.join(self.RECORD_FOLDER_POOR, self.poorPostureFile)):
+                os.remove(os.path.join(self.RECORD_FOLDER_POOR, self.poorPostureFile))
+        except OSError as e:  ## if failed, report it back to the user ##
+            print("Error: %s - %s." % (e.filename, e.strerror))
+        print('********  reset timer ************')
+
+    def handleBadPostureAlarm(self, current_time, img):
+        print("************ Timed out ", current_time + '************')
+        cv2.putText(img, 'Heads-Up', (1500, 1000), cv2.FONT_HERSHEY_PLAIN, 3, (255, 255, 0), 3)
+        file = "3.wav"
+        os.system("afplay " + file)
+        print('*************** wav *******************')
+        time.sleep(self.freezeVideoTime)
+        self.poorPostureTimerStarted = False
+        self.poorPostureVideoWriter.release()
+        self.poorPostureVideoWriter = None
 
     def slopeOf(self, x1, y1, x2, y2):
         m = (y2 - y1) / (x2 - x1)

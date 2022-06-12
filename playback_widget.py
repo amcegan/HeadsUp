@@ -17,7 +17,7 @@ class VideoPlayer(QWidget):
     def __init__(self, parent=None):
         super(VideoPlayer, self).__init__(parent)
         settings = munchify(yaml.safe_load(open("config/config.yml")))
-        self.RECORD_FOLDER = settings.record_folder
+        self.RECORD_FOLDER_POOR = settings.record
         self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
 
         videoWidget = QVideoWidget()

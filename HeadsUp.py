@@ -1,20 +1,22 @@
 # USB camera display using PyQt and OpenCV, from iosoft.blog
 # Copyright (c) Jeremy P Bentham 2019
 # Please credit iosoft.blog if you use the information or software in it
-from PyQt5.Qt3DRender import QCamera
-from PyQt5.QtMultimedia import QCameraInfo, QCameraImageCapture
+import cv2
+import sys
+import threading
+import time
+
+from PyQt5.QtCore import QTimer, pyqtSignal, pyqtSlot, QSize
+from PyQt5.QtGui import QFont, QImage
+from PyQt5.QtMultimedia import QCameraInfo
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTabWidget, QToolBar, QComboBox
+from PyQt5.QtWidgets import QWidget, QAction, QVBoxLayout, QHBoxLayout
 
 from live_widget import LiveWidget
 from playback_widget import VideoPlayer
 from yolo_formatter import YoloVideoSelf
 
 VERSION = "Heads-Up v0.10"
-
-import sys, time, threading, cv2
-from PyQt5.QtCore import QTimer, pyqtSignal, pyqtSlot, QSize
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QTabWidget, QToolBar, QComboBox
-from PyQt5.QtWidgets import QWidget, QAction, QVBoxLayout, QHBoxLayout
-from PyQt5.QtGui import QFont, QImage, QTextCursor
 
 try:
     import Queue as Queue
