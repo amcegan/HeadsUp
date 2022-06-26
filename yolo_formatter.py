@@ -1,3 +1,5 @@
+import glob
+
 from cv2 import cv2
 import numpy as np
 import time
@@ -133,8 +135,9 @@ class YoloVideoSelf:
                     print("************ Timer started now =", current_time + '************')
                     # os.makedirs(self.folder)  # important step
                     self.poorPostureFile = datetime.now().strftime('%Y-%m-%d__%H-%M-%S') + '.mp4'
-                    self.poorPostureVideoWriter = cv2.VideoWriter(os.path.join(self.RECORD_FOLDER_POOR, self.poorPostureFile),
-                                                                  self.codec, 10.0, (self.width, self.height))
+                    self.poorPostureVideoWriter = cv2.VideoWriter(
+                        os.path.join(self.RECORD_FOLDER_POOR, self.poorPostureFile),
+                        self.codec, 10.0, (self.width, self.height))
                 timedOut = time.time() - self.startPoorPostureTimer > 5
                 # print('timed out ' + str(timedOut))
                 if timedOut and self.poorPostureTimerStarted:
@@ -162,6 +165,8 @@ class YoloVideoSelf:
 
     def createGoodPostureWriter1(self):
         print("************ createGoodPostureWriter 1 ************")
+
+        self.deleteExcessGoodVideos()
         self.startGoodPostureTimer = time.time()
         self.goodPostureFile = datetime.now().strftime('%Y-%m-%d__%H-%M-%S') + '.mp4'
         self.goodPostureVideoWriter = cv2.VideoWriter(os.path.join(self.RECORD_FOLDER_GOOD, self.goodPostureFile),
@@ -169,8 +174,10 @@ class YoloVideoSelf:
         if self.goodPostureVideoWriter is None:
             print("************ Failed to create createGoodPostureWriter 1 ************")
 
-    def createGoodPostureWriter2 (self):
+    def createGoodPostureWriter2(self):
         print("************ createGoodPostureWriter 2 ************")
+        self.deleteExcessGoodVideos()
+
         self.startGoodPostureTimer = time.time()
         self.goodPostureFile = datetime.now().strftime('%Y-%m-%d__%H-%M-%S') + '.mp4'
         self.goodPostureVideoWriter = cv2.VideoWriter(os.path.join(self.RECORD_FOLDER_GOOD, self.goodPostureFile),
@@ -205,3 +212,13 @@ class YoloVideoSelf:
     def slopeOf(self, x1, y1, x2, y2):
         m = (y2 - y1) / (x2 - x1)
         return m
+
+    def deleteExcessGoodVideos(self):
+        currentDir = os.path.dirname(os.path.abspath(__file__))
+        list_of_files = glob.glob(currentDir + '/' + self.RECORD_FOLDER_GOOD + '/*')
+        full_path = ["{0}".format(x) for x in list_of_files]
+
+        while len(list_of_files) > 5:
+            oldest_file = min(full_path, key=os.path.getctime)
+            list_of_files.remove(oldest_file)
+            os.remove(oldest_file)
