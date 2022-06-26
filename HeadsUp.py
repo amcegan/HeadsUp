@@ -6,11 +6,13 @@ import sys
 import threading
 import time
 
+import yaml
 from PyQt5.QtCore import QTimer, pyqtSignal, pyqtSlot, QSize
 from PyQt5.QtGui import QFont, QImage
 from PyQt5.QtMultimedia import QCameraInfo
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTabWidget, QToolBar, QComboBox
 from PyQt5.QtWidgets import QWidget, QAction, QVBoxLayout, QHBoxLayout
+from munch import munchify
 
 from live_widget import LiveWidget
 from playback_widget import VideoPlayer
@@ -40,6 +42,8 @@ class MyWindow(QMainWindow):
 
     # Create main window
     def __init__(self, parent=None):
+        settings = munchify(yaml.safe_load(open("config/config.yml")))
+
         # self.deBugLogPorts()
         QMainWindow.__init__(self, parent)
         self.qWidget = QWidget(self)
@@ -53,6 +57,7 @@ class MyWindow(QMainWindow):
         self.tabs = QTabWidget()
         self.tab1 = QWidget()
         self.tab2 = QWidget()
+        self.tab3 = QWidget()
 
         camera_toolbar = QToolBar("Camera X")
         camera_toolbar.setIconSize(QSize(14, 14))
@@ -73,6 +78,7 @@ class MyWindow(QMainWindow):
         # Add tabs
         self.tabs.addTab(self.tab1, "Live")
         self.tabs.addTab(self.tab2, "Play Back")
+        self.tabs.addTab(self.tab3, "View Last")
 
         # Create first tab
         self.tab1.layout = QVBoxLayout()
@@ -82,9 +88,16 @@ class MyWindow(QMainWindow):
 
         # Create 2nd tab
         self.tab2.layout = QVBoxLayout()
-        self.playBackWidget = VideoPlayer(self)
+        self.playBackWidget = VideoPlayer(self, settings.record_folder_poor)
         self.tab2.layout.addWidget(self.playBackWidget)
         self.tab2.setLayout(self.tab2.layout)
+
+
+        # Create 3rd tab
+        self.tab3.layout = QVBoxLayout()
+        self.playBackWidget = VideoPlayer(self, settings.record_folder_good)
+        self.tab3.layout.addWidget(self.playBackWidget)
+        self.tab3.setLayout(self.tab3.layout)
 
         self.vLayout = QVBoxLayout()  # Window layout
         self.hBoxLayout = QHBoxLayout()
